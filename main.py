@@ -9,6 +9,8 @@ from sklearn.preprocessing import MinMaxScaler
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
+from fastapi.middleware.cors import CORSMiddleware
+
 
 cacheModels = {}
 cachesScalars = {}
@@ -21,6 +23,13 @@ ALPHA = 0.001
 DEVICE = torch.device("cpu")
 
 app = FastAPI(title="Stock Predicting Model (FOR NSE)")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins, change this to restrict to specific origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, OPTIONS, etc.)
+    allow_headers=["*"],  # Allows all headers
+)
 
 class StockRequest(BaseModel):
     stockName: str
@@ -126,7 +135,7 @@ async def predict(request: StockRequest):
         prediction = scalar.inverse_transform(scaledPrediction).flatten().tolist()
         response = {
             "stock": stockName,
-            "predicted_prices": {f"day_{i+1}": price for i, price in enumerate(prediction)}
+            "predicted_prices": {f"day:{i+1}": price for i, price in enumerate(prediction)}
         }
         return response
     except Exception as e:
